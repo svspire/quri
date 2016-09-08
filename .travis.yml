@@ -5,7 +5,7 @@ env:
   global:
     - PATH=~/.roswell/bin:$PATH
     - ROSWELL_BRANCH=master
-    #- ROSWELL_INSTALL_DIR=$HOME/.roswell
+    - ROSWELL_INSTALL_DIR=$HOME/.roswell
     - COVERAGE_EXCLUDE=t
   matrix:
     - LISP=sbcl-bin COVERALLS=true
