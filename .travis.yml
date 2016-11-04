@@ -17,7 +17,6 @@ env:
     - LISP=cmucl
 
 install:
-  - dpkg -s libc6-i386 >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install libc6-i386)
   - curl -L https://raw.githubusercontent.com/roswell/roswell/$ROSWELL_BRANCH/scripts/install-for-ci.sh | sh
   - ros install prove
 
