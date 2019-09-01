@@ -36,8 +36,13 @@ jobs:
           echo $HOME
           ls -a $HOME
           pwd
+          ls -a $HOME/.config
+          ls -a $HOME/.config/common-lisp
+          ls -a $HOME/.config/common-lisp/source-registry.conf.d
           mkdir -p ~/.config/common-lisp/source-registry.conf.d
           echo "(:tree \"$GITHUB_WORKSPACE/\")" > ~/.config/common-lisp/source-registry.conf.d/ci.conf
+          mkdir -p ~/AppData/Local/config/common-lisp/source-registry.conf.d
+          echo "(:tree \"$GITHUB_WORKSPACE/\")" > ~/AppData/Local/config/common-lisp/source-registry.conf.d/ci.conf
       - name: Run tests
         shell: bash
         run: |
