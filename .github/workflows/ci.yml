@@ -29,6 +29,12 @@ jobs:
           curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
       - name: Install Prove
         run: ros install prove
+      - name: Add source registry (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          mkdir -p ~/.config/source-registry.conf.d
+          echo "(:tree \"$GITHUB_WORKSPACE/\")" > ~/.config/source-registry.conf.d/ci.conf
       - name: Run tests
         shell: bash
         run: |
