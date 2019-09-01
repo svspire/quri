@@ -29,12 +29,8 @@ jobs:
           curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
       - name: Install Prove
         run: ros install prove
-      - name: Run tests (Ubuntu & macOS)
-        if: matrix.os != 'windows-latest'
+      - name: Run tests
+        shell: bash
         run: |
           PATH="~/.roswell/bin:$PATH"
           run-prove quri-test.asd
-      - name: Run tests (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          ros -S . %userprofile%\.roswell\bin\run-prove.ros quri-test.asd
