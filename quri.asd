@@ -20,25 +20,25 @@
                 :serial t
                 :components
                 ((:file "package")
-                 (:file "util" :depends-on ("package"))
-                 (:file "error" :depends-on ("package"))
-                 (:file "port" :depends-on ("package"))
-                 (:file "uri" :depends-on ("package" "port"))
-                 (:file "encode" :depends-on ("package"))
-                 (:file "decode" :depends-on ("package" "error" "util"))
-                 (:file "etld" :depends-on ("package"))
-                 (:file "parser" :depends-on ("package" "error" "util"))
-                 (:file "domain" :depends-on ("uri" "etld"))
+                 (:file "macros")
+                 (:file "util")
+                 (:file "error")
+                 (:file "port")
+                 (:file "uri")
+                 (:file "encode")
+                 (:file "decode")
+                 (:file "etld")
+                 (:file "parser")
+                 (:file "domain")
                  (:module "uri-classes"
                   :serial t
                   :pathname "uri"
-                  :depends-on ("package" "uri" "port" "encode" "decode")
                   :components
                   ((:file "ftp")
                    (:file "http")
                    (:file "ldap")
                    (:file "file")))
-                 (:file "quri" :depends-on ("package" "uri" "uri-classes" "domain" "parser" "decode" "encode" "error"))
+                 (:file "quri")
                  )))
   :description "Yet another URI library for Common Lisp"
   :long-description
