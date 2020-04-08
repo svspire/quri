@@ -17,11 +17,20 @@
                :cl-utilities
                #+sbcl :sb-cltl2)
   :components ((:module "src"
+                :serial t
                 :components
                 ((:file "package")
-                 (:file "quri" :depends-on ("package" "uri" "uri-classes" "domain" "parser" "decode" "encode" "error"))
+                 (:file "util" :depends-on ("package"))
+                 (:file "error" :depends-on ("package"))
+                 (:file "port" :depends-on ("package"))
                  (:file "uri" :depends-on ("package" "port"))
+                 (:file "encode" :depends-on ("package"))
+                 (:file "decode" :depends-on ("package" "error" "util"))
+                 (:file "etld" :depends-on ("package"))
+                 (:file "parser" :depends-on ("package" "error" "util"))
+                 (:file "domain" :depends-on ("uri" "etld"))
                  (:module "uri-classes"
+                  :serial t
                   :pathname "uri"
                   :depends-on ("package" "uri" "port" "encode" "decode")
                   :components
@@ -29,14 +38,8 @@
                    (:file "http")
                    (:file "ldap")
                    (:file "file")))
-                 (:file "domain" :depends-on ("uri" "etld"))
-                 (:file "etld" :depends-on ("package"))
-                 (:file "parser" :depends-on ("package" "error" "util"))
-                 (:file "decode" :depends-on ("package" "error" "util"))
-                 (:file "encode" :depends-on ("package"))
-                 (:file "port" :depends-on ("package"))
-                 (:file "util" :depends-on ("package"))
-                 (:file "error" :depends-on ("package")))))
+                 (:file "quri" :depends-on ("package" "uri" "uri-classes" "domain" "parser" "decode" "encode" "error"))
+                 )))
   :description "Yet another URI library for Common Lisp"
   :long-description
   #.(with-open-file (stream (merge-pathnames

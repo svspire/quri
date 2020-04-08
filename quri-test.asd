@@ -9,6 +9,7 @@
   :depends-on (:quri
                :prove)
   :components ((:module "t"
+                :serial t
                 :components
                 ((:file "package")
                  (:test-file "quri")
