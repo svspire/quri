@@ -35,6 +35,7 @@
            :parse-path
            :parse-query
            :parse-fragment
+           :parse-domain
 
            :make-uri
            :uri
