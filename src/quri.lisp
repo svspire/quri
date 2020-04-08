@@ -100,7 +100,6 @@
               (type-of uri)
               (render-uri uri))))
 
-
 (defun merge-uri-paths (ref-path base-path)
   (declare (type (or string null) ref-path base-path))
   (let* ((path-list (and base-path (nreverse (split-sequence #\/ base-path))))
