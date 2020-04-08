@@ -1,11 +1,4 @@
-(in-package :cl-user)
-(defpackage quri.encode
-  (:use :cl)
-  (:import-from :babel-encodings
-                :*default-character-encoding*)
-  (:export :url-encode
-           :url-encode-params))
-(in-package :quri.encode)
+(in-package :quri)
 
 (declaim (type (simple-array character (16)) +hexdigit-char+))
 (defvar +hexdigit-char+

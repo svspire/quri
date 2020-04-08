@@ -1,9 +1,4 @@
-(in-package :cl-user)
-(defpackage quri-test.benchmark
-  (:use :cl
-        :quri)
-  (:export :run-benchmark))
-(in-package :quri-test.benchmark)
+(in-package :quri-test)
 
 (defun run-benchmark ()
   (format t "~2&# QURI:URI~2%")

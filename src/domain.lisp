@@ -1,25 +1,4 @@
-(in-package :cl-user)
-(defpackage quri.domain
-  (:use :cl)
-  (:import-from :quri.uri
-                :uri-host)
-  (:import-from :quri.etld
-                :parse-domain)
-  (:import-from :alexandria
-                :xor
-                :ends-with-subseq
-                :length=
-                :when-let)
-  (:import-from :split-sequence
-                :split-sequence)
-  (:export :ipv4-addr-p
-           :ipv6-addr-p
-           :ip-addr-p
-           :ip-addr=
-           :uri-tld
-           :uri-domain
-           :cookie-domain-p))
-(in-package :quri.domain)
+(in-package :quri)
 
 (defun uri-tld (uri)
   (let ((host (uri-host uri)))

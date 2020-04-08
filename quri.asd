@@ -7,11 +7,6 @@
   Author: Eitaro Fukamachi (e.arrows@gmail.com)
 |#
 
-(in-package :cl-user)
-(defpackage quri-asd
-  (:use :cl :asdf))
-(in-package :quri-asd)
-
 (defsystem quri
   :version "0.1.0"
   :author "Eitaro Fukamachi"
@@ -23,24 +18,25 @@
                #+sbcl :sb-cltl2)
   :components ((:module "src"
                 :components
-                ((:file "quri" :depends-on ("uri" "uri-classes" "domain" "parser" "decode" "encode" "error"))
-                 (:file "uri" :depends-on ("port"))
+                ((:file "package")
+                 (:file "quri" :depends-on ("package" "uri" "uri-classes" "domain" "parser" "decode" "encode" "error"))
+                 (:file "uri" :depends-on ("package" "port"))
                  (:module "uri-classes"
                   :pathname "uri"
-                  :depends-on ("uri" "port" "encode" "decode")
+                  :depends-on ("package" "uri" "port" "encode" "decode")
                   :components
                   ((:file "ftp")
                    (:file "http")
                    (:file "ldap")
                    (:file "file")))
                  (:file "domain" :depends-on ("uri" "etld"))
-                 (:file "etld")
-                 (:file "parser" :depends-on ("error" "util"))
-                 (:file "decode" :depends-on ("error" "util"))
-                 (:file "encode")
-                 (:file "port")
-                 (:file "util")
-                 (:file "error"))))
+                 (:file "etld" :depends-on ("package"))
+                 (:file "parser" :depends-on ("package" "error" "util"))
+                 (:file "decode" :depends-on ("package" "error" "util"))
+                 (:file "encode" :depends-on ("package"))
+                 (:file "port" :depends-on ("package"))
+                 (:file "util" :depends-on ("package"))
+                 (:file "error" :depends-on ("package")))))
   :description "Yet another URI library for Common Lisp"
   :long-description
   #.(with-open-file (stream (merge-pathnames

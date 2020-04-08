@@ -1,19 +1,4 @@
-(in-package :cl-user)
-(defpackage quri.util
-  (:use :cl)
-  (:import-from :alexandria
-                :with-gensyms)
-  (:export :standard-alpha-char-p
-           :standard-alpha-byte-p
-           :standard-alphanumeric-p
-           :standard-alphanumeric-byte-p
-           :with-array-parsing
-           :with-string-parsing
-           :with-byte-array-parsing
-           :redo
-           :gonext
-           :goto))
-(in-package :quri.util)
+(in-package :quri)
 
 (defun standard-alpha-char-p (char)
   (declare (type character char)

@@ -1,10 +1,4 @@
-(in-package :cl-user)
-(defpackage quri.port
-  (:use :cl)
-  (:import-from :alexandria
-                :plist-hash-table)
-  (:export :scheme-default-port))
-(in-package :quri.port)
+(in-package :quri)
 
 (defvar +default-ports+
   (plist-hash-table

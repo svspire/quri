@@ -1,9 +1,4 @@
-(in-package :cl-user)
-(defpackage quri-test.domain
-  (:use :cl
-        :quri.domain
-        :prove))
-(in-package :quri-test.domain)
+(in-package :quri-test)
 
 (plan nil)
 

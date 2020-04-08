@@ -1,16 +1,4 @@
-(in-package :cl-user)
-(defpackage quri.uri.file
-  (:use :cl)
-  (:import-from :quri.uri
-                :uri
-                :scheme
-                :port
-                :uri-path)
-  (:export :uri-file
-           :uri-file-p
-           :make-uri-file
-           :uri-file-pathname))
-(in-package :quri.uri.file)
+(in-package :quri)
 
 (defstruct (uri-file (:include uri (scheme "file") (port nil))))
 

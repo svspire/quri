@@ -1,24 +1,4 @@
-(in-package :cl-user)
-(defpackage quri.parser
-  (:use :cl
-        :quri.error
-        :quri.util)
-  #+(or sbcl openmcl cmu allegro)
-  (:import-from #+sbcl :sb-cltl2
-                #+openmcl :ccl
-                #+cmu :ext
-                #+allegro :sys
-                :variable-information)
-  (:import-from :alexandria
-                :with-gensyms
-                :define-constant)
-  (:export :parse-uri
-           :parse-scheme
-           :parse-authority
-           :parse-path
-           :parse-query
-           :parse-fragment))
-(in-package :quri.parser)
+(in-package :quri)
 
 (deftype simple-byte-vector (&optional (len '*)) `(simple-array (unsigned-byte 8) (,len)))
 

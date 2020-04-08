@@ -1,9 +1,4 @@
-(in-package :cl-user)
-(defpackage quri-test.parser
-  (:use :cl
-        :quri.parser
-        :prove))
-(in-package :quri-test.parser)
+(in-package :quri-test)
 
 (plan nil)
 

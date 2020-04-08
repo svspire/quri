@@ -1,9 +1,4 @@
-(in-package :cl-user)
-(defpackage quri-test.decode
-  (:use :cl
-        :quri.decode
-        :prove))
-(in-package :quri-test.decode)
+(in-package :quri-test)
 
 (plan 8)
 

@@ -1,11 +1,4 @@
-(in-package :cl-user)
-(defpackage quri.etld
-  (:use :cl)
-  (:import-from :alexandria
-                :starts-with-subseq
-                :ends-with-subseq)
-  (:export :parse-domain))
-(in-package :quri.etld)
+(in-package :quri)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *default-etld-names*

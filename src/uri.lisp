@@ -1,26 +1,4 @@
-(in-package :cl-user)
-(defpackage quri.uri
-  (:use :cl)
-  (:import-from :quri.port
-                :scheme-default-port)
-  (:export :uri
-           :make-basic-uri
-           :uri-p
-           :uri-scheme
-           :uri-userinfo
-           :uri-host
-           :uri-port
-           :uri-path
-           :uri-query
-           :uri-fragment
-           :uri-authority
-
-           :urn
-           :make-urn
-           :urn-p
-           :urn-nid
-           :urn-nss))
-(in-package :quri.uri)
+(in-package :quri)
 
 (defstruct (uri (:constructor %make-uri))
   scheme

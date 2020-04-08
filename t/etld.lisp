@@ -1,9 +1,4 @@
-(in-package :cl-user)
-(defpackage quri-test.etld
-  (:use :cl
-        :quri.etld
-        :prove))
-(in-package :quri-test.etld)
+(in-package :quri-test)
 
 (plan nil)
 

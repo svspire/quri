@@ -1,32 +1,4 @@
-(in-package :cl-user)
-(defpackage quri.uri.ldap
-  (:use :cl)
-  (:import-from :quri.uri
-                :uri
-                :scheme
-                :port
-                :uri-path
-                :uri-query)
-  (:import-from :quri.port
-                :scheme-default-port)
-  (:import-from :split-sequence
-                :split-sequence)
-  (:import-from :alexandria
-                :when-let)
-  (:export :uri-ldap
-           :make-uri-ldap
-           :uri-ldap-p
-
-           :uri-ldaps
-           :make-uri-ldaps
-           :uri-ldaps-p
-
-           :uri-ldap-dn
-           :uri-ldap-attributes
-           :uri-ldap-scope
-           :uri-ldap-filter
-           :uri-ldap-extensions))
-(in-package :quri.uri.ldap)
+(in-package :quri)
 
 (defstruct (uri-ldap (:include uri (scheme "ldap") (port #.(scheme-default-port "ldap")))))
 

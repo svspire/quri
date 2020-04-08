@@ -1,8 +1,3 @@
-(in-package :cl-user)
-(defpackage quri-test
-  (:use :cl
-        :quri
-        :prove))
 (in-package :quri-test)
 
 (plan nil)

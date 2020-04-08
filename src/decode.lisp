@@ -1,18 +1,4 @@
-(in-package :cl-user)
-(defpackage quri.decode
-  (:use :cl
-        :quri.util
-        :quri.error)
-  (:import-from :babel
-                :octets-to-string)
-  (:import-from :babel-encodings
-                :*default-character-encoding*)
-  (:import-from :cl-utilities
-                :collecting
-                :collect)
-  (:export :url-decode
-           :url-decode-params))
-(in-package :quri.decode)
+(in-package :quri)
 
 (declaim (ftype (function (character) (unsigned-byte 4)) hexdigit-to-integer))
 (defun hexdigit-to-integer (char)

@@ -1,29 +1,4 @@
-(in-package :cl-user)
-(defpackage quri.uri.http
-  (:use :cl)
-  (:import-from :quri.uri
-                :uri
-                :scheme
-                :port
-                :uri-query)
-  (:import-from :quri.port
-                :scheme-default-port)
-  (:import-from :quri.encode
-                :url-encode-params)
-  (:import-from :quri.decode
-                :url-decode-params)
-  (:import-from :alexandria
-                :when-let)
-  (:export :uri-http
-           :make-uri-http
-           :uri-http-p
-
-           :uri-https
-           :make-uri-https
-           :uri-https-p
-
-           :uri-query-params))
-(in-package :quri.uri.http)
+(in-package :quri)
 
 (defstruct (uri-http (:include uri (scheme "http") (port #.(scheme-default-port "http")))))
 
