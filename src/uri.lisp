@@ -1,6 +1,7 @@
 (in-package :quri)
 
-(defstruct (uri (:constructor %make-uri))
+(defstruct (uri (:constructor %make-uri)
+                (:copier %copy-uri))
   scheme
   userinfo
   host

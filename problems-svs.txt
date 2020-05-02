@@ -1,0 +1,31 @@
+5/2/2020 SVS
+
+The string "uri" is pretty dramatically overused herein.
+
+It's both the name of a file and of a folder.
+It's both the name of a struct and the name of a function.
+
+The struct it names should actually be called a "basic-uri"
+since that's how it's referred to by its own maker function.
+But if we made that change, all the accessor functions would
+stop working, as well as all the "sub-structs" he's making
+from that root struct.
+
+I'd kind of like to rewrite this thing using CLOS instead of 
+structs. The whole thing would be a lot simpler without this
+defstruct pseudo-hierarchy.
+
+Furthermore, because he's using structs, the defstruct form
+for uri implicitly creates a copy-uri function (per ANSI),
+but Fukamachi is also explicitly defining a copy-uri function
+in the quri file. This throws a warning on some compilers.
+But the author probably never saw such a warning because he
+had per-file package names, which I've removed because I find
+per-file package names to be ridiculous and contrary to the spirit
+of Common Lisp.
+
+I'm going to assume that the copy-uri that's explicitly defined
+is the one the author actually wants, so I'm going to tell the
+defstruct to make a :copier called %copy-uri. It's possible
+the author didn't know that defstruct automatically creates a copier
+function and that he didn't need to define one explicitly.
