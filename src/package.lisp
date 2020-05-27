@@ -25,9 +25,6 @@
                 :ends-with-subseq
                 :length=
                 :with-gensyms)
-  (:import-from :cl-utilities
-                :collecting
-                :collect)
 
   (:export :parse-uri
            :parse-scheme

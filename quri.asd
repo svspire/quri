@@ -14,7 +14,7 @@
   :depends-on (:babel
                :alexandria
                :split-sequence
-               :cl-utilities
+               ;:cl-utilities
                #+sbcl :sb-cltl2)
   :components ((:module "src"
                 :serial t

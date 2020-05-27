@@ -72,6 +72,31 @@
            (error 'url-decoding-error)))))
     (babel:octets-to-string buffer :end i :encoding encoding :errorp (not lenient))))
 
+; from Tim Bradshaw, http://www.tfeb.org/lisp/hax.html#COLLECTING
+(defmacro collecting (&body forms)
+  ;; Collect some random stuff into a list by keeping a tail-pointer
+  ;; to it, return the collected list.  No real point in using
+  ;; gensyms, although one probably should on principle.
+  "Collect things into a list forwards.  Within the body of this macro
+   The form `(COLLECT THING)' will collect THING into the list returned by 
+   COLLECTING.  Uses a tail pointer -> efficient."
+  (let (($resnam$ (gensym)) ($tail$ (gensym)) ($thing$ (gensym)))
+    `(let
+       (,$resnam$ ,$tail$)
+       (macrolet
+	 ((collect
+	     (thing)
+	    ;; Collect returns the thing it's collecting
+	    `(let ((,',$thing$ ,thing))
+	       (if ,',$resnam$
+		   (setf (cdr ,',$tail$)
+			   (setf ,',$tail$ (list ,',$thing$)))
+		   (setf ,',$resnam$
+			 (setf ,',$tail$ (list ,',$thing$))))
+	       ,',$thing$)))
+	 ,@forms)
+       ,$resnam$)))
+
 (defun url-decode-params (data &key
                                  (delimiter #\&)
                                  (encoding babel-encodings:*default-character-encoding*)
