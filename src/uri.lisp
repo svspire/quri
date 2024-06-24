@@ -2,7 +2,7 @@
 
 (defstruct (uri (:constructor %make-uri)
                 (:copier %copy-uri))
-  scheme
+  (scheme nil :read-only t)
   userinfo
   host
   port
@@ -10,27 +10,28 @@
   query
   fragment)
 
-(defun make-basic-uri (&key scheme userinfo host port path query fragment)
-  (let ((uri (%make-uri :scheme scheme
-                        :userinfo userinfo
-                        :host host
-                        :port port
-                        :path path
-                        :query query
-                        :fragment fragment)))
+(defmethod make-load-form ((object uri) &optional environment)
+  (make-load-form-saving-slots object :environment environment))
+
+(defun make-basic-uri (&rest args &key scheme userinfo host port path query fragment)
+  (declare (ignore scheme userinfo host port path query fragment))
+  (let ((uri (apply #'%make-uri args)))
     (unless (uri-port uri)
-      (setf (uri-port uri)
-            (scheme-default-port (uri-scheme uri))))
+      (setf (uri-port uri) (scheme-default-port (uri-scheme uri))))
+    (when (pathnamep (uri-path uri))
+      (setf (uri-path uri)
+            (uiop:native-namestring (uri-path uri))))
     uri))
 
 (defun uri-authority (uri)
   (when (uri-host uri)
     (let ((default-port (scheme-default-port (uri-scheme uri))))
-      (format nil "~:[~;~:*~A@~]~A~:[:~A~;~*~]"
-              (uri-userinfo uri)
-              (uri-host uri)
-              (eql (uri-port uri) default-port)
-              (uri-port uri)))))
+      (with-standard-io-syntax
+        (format nil "~:[~;~:*~A@~]~A~:[:~A~;~*~]"
+                (uri-userinfo uri)
+                (uri-host uri)
+                (eql (uri-port uri) default-port)
+                (uri-port uri))))))
 
 (defstruct (urn (:include uri (scheme :urn))
                 (:constructor %make-urn))

@@ -2,24 +2,51 @@
 
 (plan nil)
 
+(defun common-uri-equivalences-assertions ()
+  (is (make-uri :scheme "http" :host "b.hatena.ne.jp" :port 80 :path "/path")
+      (make-uri :scheme "http" :host "b.hatena.ne.jp" :port 80 :path "/path")
+      "Same scheme, host, port, path query and fragment.")
+  (isnt (make-uri :scheme "http"  :host "b.hatena.ne.jp" :port 80 :path "/path")
+        (make-uri :scheme "https" :host "b.hatena.ne.jp" :port 80 :path "/path")
+        "Differ by scheme.")
+  (isnt (make-uri :scheme "http" :host "b.hatena.ne.jp" :port 80)
+        (make-uri :scheme "http" :host "b.hatena.ne.jp" :port 81)
+        "Differ by port.")
+  (isnt (make-uri :scheme "http" :host "b.hatena.ne.jp" :path "/path")
+        (make-uri :scheme "http" :host "b.hatena.ne.jp" :path "/path" :query "?")
+        "Differ by query.")
+  (isnt (make-uri :scheme "http" :host "b.hatena.ne.jp" :path "/path")
+        (make-uri :scheme "http" :host "b.hatena.ne.jp" :path "/path" :fragment "bar")
+        "Differ by fragment.")
+  (is (make-uri :scheme "http" :host "b.hatena.ne.jp")
+      (make-uri :scheme "http" :host "b.hatena.ne.jp" :path "")
+      "The NIL and empty string path are equivalent."))
+
 (subtest "uri="
   (let ((prove:*default-test-function* #'uri=))
-    (is (uri "http://b.hatena.ne.jp")
-        (uri "http://b.hatena.ne.jp:80"))
-    (is (uri "http://b.hatena.ne.jp")
-        (make-uri :scheme "http" :host "b.hatena.ne.jp"))
-    (is (uri "http://b.hatena.ne.jp")
-        (uri "http://b.hatena.ne.jp/"))
-    (isnt (uri "http://b.hatena.ne.jp/")
-          (uri "http://b.hatena.ne.jp/?"))
-    (isnt (uri "http//b.hatena.ne.jp/#foo")
-          (uri "http//b.hatena.ne.jp/#bar"))
+    (common-uri-equivalences-assertions)
+    (isnt (make-uri :scheme "http" :host "b.hatena.ne.jp" :path "/")
+          (make-uri :scheme "http" :host "b.hatena.ne.jp")
+          "The NIL and \"/\" path aren't equivalent.")
+    (isnt (make-uri :scheme "http" :host "b.hatena.ne.jp" :path "/")
+          (make-uri :scheme "http" :host "b.hatena.ne.jp" :path "")
+          "The empty string and \"/\" path aren't equivalent.")
     #+todo
     (is (uri "mailto:Joe@Example.COM")
         (uri "mailto:Joe@example.com"))
     #+todo
     (is (uri "mailto:Postmaster@example.com")
         (uri "mailto:POSTMASTER@example.com"))))
+
+(subtest "uri-equal"
+  (let ((prove:*default-test-function* #'quri:uri-equal))
+    (common-uri-equivalences-assertions)
+    (is (make-uri :scheme "http" :host "b.hatena.ne.jp" :path "/")
+        (make-uri :scheme "http" :host "b.hatena.ne.jp")
+        "The NIL and \"/\" path are equivalent.")
+    (is (make-uri :scheme "http" :host "b.hatena.ne.jp" :path "/")
+        (make-uri :scheme "http" :host "b.hatena.ne.jp" :path "")
+        "The empty string and \"/\" path are equivalent.")))
 
 (defparameter *test-cases*
   '(("file:///tmp/junk.txt" .
@@ -55,7 +82,23 @@
     ("tel:+31-641044153" .
      ("tel" nil nil "+31-641044153" nil nil))
     ("http://" .
-     ("http" nil nil nil nil nil))))
+     ("http" nil nil nil nil nil))
+    ("foo:/a/b/c" .
+     ("foo" nil nil "/a/b/c" nil nil))
+    ("foo::" .
+     ("foo" nil nil ":" nil nil))
+    ("/" .
+     (nil nil nil "/" nil nil))
+    ("foo:/" .
+     ("foo" nil nil "/" nil nil))
+    ("//a/" .
+     (nil nil "a" "/" nil nil))
+    ("//" .
+     (nil nil nil nil nil nil))
+    ("///" .
+     (nil nil nil "/" nil nil))
+    ("//foo/bar" .
+     (nil nil "foo" "/bar" nil nil))))
 
 (loop for (test-uri . params) in *test-cases* do
   (subtest (format nil "~A (string)" test-uri)
@@ -78,6 +121,14 @@
     (let ((uri (uri test-uri)))
       (is uri (copy-uri uri) :test #'uri=))))
 
+(defparameter *render-uri-inverse-test-cases*
+  '(("file:///tmp/junk.txt?query#fragment" .
+     ("file" nil nil "/tmp/junk.txt" "query" "fragment"))))
+
+(loop for (test-uri . params) in *render-uri-inverse-test-cases* do
+  (subtest (format nil "~A (render-uri after uri gives identity)" test-uri)
+    (is test-uri (render-uri (uri test-uri)))))
+
 #+nil
 (is-error (uri "//www.youtube.com/embed/”6j0LpmSdWg4”")
           'uri-malformed-string)
@@ -93,11 +144,34 @@
     (,(uri "../bar") . "http://www.example.com/path/bar")
     (,(uri "other/./car") . "http://www.example.com/path/a/other/car")
     (,(uri "./../.") . "http://www.example.com/path/")
-    (,(make-uri :query "name=fukamachi") . "http://www.example.com/path/a/b.html?name=fukamachi")))
+    (,(uri "/./foo") . "http://www.example.com/foo")
+    (,(uri "/./foo/") . "http://www.example.com/foo/")
+    (,(uri "/x/../y/") . "http://www.example.com/y/")
+    (,(uri "/x/../../../y/") . "http://www.example.com/y/")
+    (,(uri "foo://x/y/../z/") . "foo://x/z/")
+    (,(make-uri :query "name=fukamachi") . "http://www.example.com/path/a/b.html?name=fukamachi")
+    (,(make-uri :scheme "https" :host "foo.com" :path "foo/bar") . "https://foo.com/foo/bar")
+    (,(uri "https://example.org/#/?b") . "https://example.org/#/?b")
+    (,(uri "about:blank") . "about:blank")))
 
-(subtest "merge-uris"
-  (loop for (test-uri . result-uri) in *merge-test-cases* do
-       (let ((merged-uri (merge-uris test-uri *base-uri*)))
-         (is (render-uri merged-uri) result-uri :test 'string=))))
+(loop for (test-uri . result-uri) in *merge-test-cases* do
+  (let ((merged-uri (merge-uris test-uri *base-uri*)))
+    (subtest "merge-uris"
+      (is (render-uri merged-uri) result-uri :test 'string=))
+    (subtest "merge-uris type checking"
+      (unless (uri-scheme test-uri)
+        (is (symbol-name (type-of merged-uri))
+            (symbol-name (type-of *base-uri*)))))))
+
+(subtest "render-uri"
+  (is (let* ((*print-base* 2))
+        (render-uri (uri "//foo:80?a=5")))
+      "//foo:80?a=5"))
+
+(subtest "coerce cl:pathname"
+  (is  (quri:make-basic-uri :path "foo") (quri:make-basic-uri :path #p"foo")
+       :test 'quri:uri=)
+  (is  (quri:make-uri-file :path "foo") (quri:make-uri-file :path #p"foo")
+       :test 'quri:uri=))
 
 (finalize)

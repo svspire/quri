@@ -6,20 +6,26 @@
 <p align=center><a href="https://www.flickr.com/photos/m-louis/8209540334/"><img src="https://c7.staticflickr.com/9/8202/8209540334_76417d9fde_b.jpg" alt="冷やしきゅうり"></a></p>
 <p align=right><i>Photo by <a href="https://www.flickr.com/photos/m-louis/">m-louis</a>, licensed under the <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a> license.</i></p>
 
-**QURI** (pronounced "Q-ree") is yet another URI library for Common Lisp. It is intended to be a replacement of [PURI](http://puri.b9.com).
+**QURI** (pronounced "Q-ree") is yet another URI library for Common Lisp. It is intended to be a replacement of [PURI](http://puri.kpe.io/).
+
+It aims at implementing [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986).
+Behaviour that deviates from it should be considered a bug; please report.
 
 ## Differences from PURI
 
-- Fast. (See [Benchmark](#benchmark))
+- Fast. (See [Benchmark](#benchmark).)
 - Doesn't encode/decode URL implicitly.
 - UTF-8 characters support.
-- Supports userinfo. (ex. `git` in `git@github.com`)
-- Supports IPv6 hostname. (ex. `ldap://[2001:db8::7]/`)
+- Supports userinfo. (Example: `git` in `git@github.com`)
+- Supports IPv6 hostname. (Example: `ldap://[2001:db8::7]/`)
 - Allows byte vectors as input.
 - Takes optional `:start` and `:end` keyword arguments.
 - Low-level parser functions.
 - URL encoding/decoding utilities.
-  - `url-decode`, `url-decode-params`, `url-encode`, `url-encode-params`
+  - `url-decode`
+  - `url-decode-params`
+  - `url-encode`
+  - `url-encode-params`
 
 ## Usage
 
@@ -366,13 +372,78 @@ Evaluation took:
   219,186,768 bytes consed
 ```
 
-## Author
+## Change log
 
-* Eitaro Fukamachi (e.arrows@gmail.com)
+### 0.7.0
+
+- Add `:lenient` option `uri-query-params` (default to `T`).
+
+- Fix `merge-uris` to accept strings as it did in 0.4.0.
+
+- Support MSVC on ECL.
+
+- Coerce URI `path` to strings.
+
+### 0.6.0
+
+- All constructors like `make-uri-file` and `make-uri-https` exported.
+
+- `uri=` and `uri-equal` normalize the path so that NIL and "" are considered equal.
+
+- The `file` scheme renders the query and the fragment.
+
+### 0.5.0
+
+- URI schemes are now read-only.
+
+  This preserves the integrity of the structures (or else the scheme of a
+  `uri-http` could be set to FTP).
+  
+  `merge-uris` has been updated accordingly, so now the following returns the
+  right thing:
+
+  ```lisp
+  (merge-uris (uri "/") (uri "https://en.wikipedia.org/wiki/URL"))
+  ; => #<URI-HTTPS https://en.wikipedia.org/>
+  ```
+
+- Prevent some functions from being affected by *PRINT-BASE*.
+
+  Functions `make-uri` and `uri-authority` build strings from a number; they now
+  do so with the standard value for `*print-base*`.
+
+### 0.4.0
+
+- Query values accept numbers again.
+  This should fix backward-compatibility issues.
+
+- New `uri-equal` which normalizes the path when comparing URIs.
+
+- The empty path and the root path are no longer equal with `uri=`.  Use
+  `uri-equal` if you want the old behaviour.
+
+- Dot segments are removed when merging URLs.
+
+- Fix parsing of the colon at the end of the scheme.
+
+### 0.3.0
+
+- Handle strings and byte vectors in query values, and nothing else.
+
+  In particular, numbers are no longer supported.  You'll have to convert them
+  to a string or a byte-vector from the caller.
+
+- `parse-uri-string` and `parse-uri-byte-vector` now return the scheme default
+  port when unspecified.
+
+## Authors and maintainers
+
+* Eitaro Fukamachi (e.arrows@gmail.com): author
+* Pierre Neidhardt (mail@ambrevar.xyz): maintainer
 
 ## Copyright
 
-Copyright (c) 2014 Eitaro Fukamachi (e.arrows@gmail.com)
+Copyright (c) 2014-2019 Eitaro Fukamachi (e.arrows@gmail.com)
 
 ## License
 

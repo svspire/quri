@@ -40,7 +40,7 @@
                           (start 0)
                           end
                           space-to-plus)
-  (declare (type (or string (simple-array (unsigned-byte 8) (*))) data)
+  (declare (type (or string simple-byte-vector) data)
            (type integer start)
            (optimize (speed 3) (safety 2)))
   (let* ((octets (if (stringp data)
@@ -48,7 +48,7 @@
                      data))
          (res (make-array (* (length octets) 3) :element-type 'character :fill-pointer t))
          (i 0))
-    (declare (type (simple-array (unsigned-byte 8) (*)) octets)
+    (declare (type simple-byte-vector octets)
              (type string res)
              (type integer i))
     (loop for byte of-type (unsigned-byte 8) across octets do
@@ -80,18 +80,30 @@
     (setf (fill-pointer res) i)
     res))
 
-(defun url-encode-params (params-alist &key (encoding babel-encodings:*default-character-encoding*)
-                                         space-to-plus)
+(defun url-encode-params (params-alist
+                          &key
+                            (encoding babel-encodings:*default-character-encoding*)
+                            space-to-plus
+                            (percent-encode t))
   (declare (optimize (speed 3)))
   (check-type params-alist list)
-  (with-output-to-string (s)
-    (loop for ((field . value) . rest) on params-alist do
-      (write-string (url-encode field :encoding encoding :space-to-plus space-to-plus) s)
-      (when value
-        (write-char #\= s)
-        (write-string (url-encode (if (stringp value)
-                                      value
-                                      (write-to-string value))
-                                  :encoding encoding :space-to-plus space-to-plus) s))
-      (when rest
-        (write-char #\& s)))))
+  (flet ((maybe-encode (string)
+           (if percent-encode
+               (url-encode string
+                           :encoding encoding
+                           :space-to-plus space-to-plus)
+               string)))
+    (with-output-to-string (s)
+      (loop for ((field . value) . rest) on params-alist do
+            (write-string (maybe-encode field) s)
+            (when value
+              (write-char #\= s)
+              (check-type value (or string number simple-byte-vector))
+              (write-string (maybe-encode
+                             (if (numberp value)
+                                 (with-standard-io-syntax
+                                   (write-to-string value))
+                                 value))
+                            s))
+            (when rest
+              (write-char #\& s))))))

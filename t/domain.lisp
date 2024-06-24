@@ -29,7 +29,8 @@
   (ok (ipv6-addr-p "2001:db8::9abc"))
   (ok (ipv6-addr-p "::1"))
   (ok (ipv6-addr-p "::"))
-  (ok (ipv6-addr-p "1::")))
+  (ok (ipv6-addr-p "1::"))
+  (ok (not (ipv6-addr-p "1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1"))))
 
 (subtest "ip-addr="
   (is (ip-addr= "127.0.0.1" "127.0.0.1") t)

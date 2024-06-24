@@ -91,7 +91,7 @@
                              (length string)
                              end)))
                (declare (type fixnum end))
-               
+
                (do ((i start (1+ i)))
                    ((= end i))
                  (let ((ch (aref string i)))
@@ -126,6 +126,8 @@
                        (not read-colons))
               (return-from ipv6-addr-p nil))
             (return-from ipv6-addr-p t))
+          (when (and (= i 7) (not endp))
+            (return-from ipv6-addr-p nil))
           (setq start e
                 read-colons-p read-colons))))))
 

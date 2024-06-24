@@ -33,9 +33,13 @@
            :parse-query
            :parse-fragment
            :parse-domain
+
            :make-uri
+           :make-basic-uri
+           :make-uri-file
            :uri
            :uri=
+           :uri-equal
            :uri-p
            :uri-scheme
            :uri-userinfo

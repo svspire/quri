@@ -1,6 +1,32 @@
 (in-package :quri)
 
 (declaim (ftype (function (character) (unsigned-byte 4)) hexdigit-to-integer))
+
+; from Tim Bradshaw, http://www.tfeb.org/lisp/hax.html#COLLECTING
+(defmacro collecting (&body forms)
+  ;; Collect some random stuff into a list by keeping a tail-pointer
+  ;; to it, return the collected list.  No real point in using
+  ;; gensyms, although one probably should on principle.
+  "Collect things into a list forwards.  Within the body of this macro
+  The form `(COLLECT THING)' will collect THING into the list returned by
+  COLLECTING.  Uses a tail pointer -> efficient."
+  (let (($resnam$ (gensym)) ($tail$ (gensym)) ($thing$ (gensym)))
+    `(let
+         (,$resnam$ ,$tail$)
+       (macrolet
+           ((collect
+                (thing)
+                ;; Collect returns the thing it's collecting
+                `(let ((,',$thing$ ,thing))
+                   (if ,',$resnam$
+                       (setf (cdr ,',$tail$)
+                             (setf ,',$tail$ (list ,',$thing$)))
+                       (setf ,',$resnam$
+                             (setf ,',$tail$ (list ,',$thing$))))
+                   ,',$thing$)))
+         ,@forms)
+       ,$resnam$)))
+
 (defun hexdigit-to-integer (char)
   (declare (type character char)
            (optimize (speed 3) (safety 0)))
@@ -20,7 +46,7 @@
                           (start 0)
                           end
                           (lenient nil))
-  (declare (type (or string (simple-array (unsigned-byte 8) (*))) data)
+  (declare (type (or string simple-byte-vector) data)
            (type integer start)
            (optimize (speed 3) (safety 2)))
   (let* ((end (or end (length data)))
@@ -29,7 +55,7 @@
          (i 0)
          parsing-encoded-part)
     (declare (type integer end i)
-             (type (simple-array (unsigned-byte 8)) buffer))
+             (type simple-byte-vector buffer))
     (flet ((write-to-buffer (byte)
              (declare (optimize (speed 3) (safety 0)))
              (setf (aref buffer i) byte)
@@ -72,38 +98,14 @@
            (error 'url-decoding-error)))))
     (babel:octets-to-string buffer :end i :encoding encoding :errorp (not lenient))))
 
-; from Tim Bradshaw, http://www.tfeb.org/lisp/hax.html#COLLECTING
-(defmacro collecting (&body forms)
-  ;; Collect some random stuff into a list by keeping a tail-pointer
-  ;; to it, return the collected list.  No real point in using
-  ;; gensyms, although one probably should on principle.
-  "Collect things into a list forwards.  Within the body of this macro
-   The form `(COLLECT THING)' will collect THING into the list returned by 
-   COLLECTING.  Uses a tail pointer -> efficient."
-  (let (($resnam$ (gensym)) ($tail$ (gensym)) ($thing$ (gensym)))
-    `(let
-       (,$resnam$ ,$tail$)
-       (macrolet
-	 ((collect
-	     (thing)
-	    ;; Collect returns the thing it's collecting
-	    `(let ((,',$thing$ ,thing))
-	       (if ,',$resnam$
-		   (setf (cdr ,',$tail$)
-			   (setf ,',$tail$ (list ,',$thing$)))
-		   (setf ,',$resnam$
-			 (setf ,',$tail$ (list ,',$thing$))))
-	       ,',$thing$)))
-	 ,@forms)
-       ,$resnam$)))
-
 (defun url-decode-params (data &key
                                  (delimiter #\&)
                                  (encoding babel-encodings:*default-character-encoding*)
                                  (start 0)
                                  end
-                                 (lenient nil))
-  (declare (type (or string (simple-array (unsigned-byte 8) (*))) data)
+                                 (lenient nil)
+                                 (percent-decode t))
+  (declare (type (or string simple-byte-vector) data)
            (type integer start)
            (type character delimiter)
            (optimize (speed 3) (safety 2)))
@@ -112,37 +114,39 @@
         (=-mark nil))
     (declare (type integer end))
     (collecting
-      (flet ((collect-pair (p)
-               (tagbody
-                  (handler-bind ((url-decoding-error
-                                   (lambda (error)
-                                     (declare (ignore error))
-                                     (when lenient
-                                       (go continue)))))
-                    (collect
-                        (cons (url-decode data :encoding encoding
-                                               :start start-mark :end =-mark
-                                               :lenient lenient)
-                              (url-decode data :encoding encoding
-                                               :start (1+ =-mark) :end p
-                                               :lenient lenient))))
-                continue)
-               (setq start-mark nil
-                     =-mark nil))
-             (collect-field (p)
-               (tagbody
-                  (handler-bind ((url-decoding-error
-                                   (lambda (error)
-                                     (declare (ignore error))
-                                     (when lenient
-                                       (go continue)))))
-                    (collect
-                        (cons (url-decode data :encoding encoding
-                                               :start start-mark :end p
-                                               :lenient lenient)
-                              nil)))
-                continue)
-               (setq start-mark nil)))
+      (labels ((maybe-decode (string encoding start end)
+                 (if percent-decode
+                     (url-decode string
+                                 :encoding encoding
+                                 :start start
+                                 :end end
+                                 :lenient lenient)
+                     (subseq string start end)))
+               (collect-pair (p)
+                 (tagbody
+                    (handler-bind ((url-decoding-error
+                                    (lambda (error)
+                                      (declare (ignore error))
+                                      (when lenient
+                                        (go continue)))))
+                      (collect
+                          (cons (maybe-decode data encoding start-mark =-mark)
+                                (maybe-decode data encoding (1+ =-mark) p))))
+                  continue)
+                 (setq start-mark nil
+                       =-mark nil))
+               (collect-field (p)
+                 (tagbody
+                    (handler-bind ((url-decoding-error
+                                    (lambda (error)
+                                      (declare (ignore error))
+                                      (when lenient
+                                        (go continue)))))
+                      (collect
+                          (cons (maybe-decode data encoding start-mark p)
+                                nil)))
+                  continue)
+                 (setq start-mark nil)))
         (with-array-parsing (char p data start end (and (not (stringp data))
                                                         #'code-char))
           (start

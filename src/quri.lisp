@@ -24,18 +24,16 @@
                :path path
                :query query
                :fragment fragment
-
                (and port
                     `(:port ,port))))))
 
-(defun copy-uri (uri &key
-                       (scheme (uri-scheme uri))
-                       (userinfo (uri-userinfo uri))
-                       (host (uri-host uri))
-                       (port (uri-port uri))
-                       (path (uri-path uri))
-                       (query (uri-query uri))
-                       (fragment (uri-fragment uri)))
+(defun copy-uri (uri &key (scheme (uri-scheme uri))
+                          (userinfo (uri-userinfo uri))
+                          (host (uri-host uri))
+                          (port (uri-port uri))
+                          (path (uri-path uri))
+                          (query (uri-query uri))
+                          (fragment (uri-fragment uri)))
   (make-uri :scheme scheme
             :userinfo userinfo
             :host host
@@ -55,43 +53,70 @@
         (apply (scheme-constructor scheme) initargs))))
 
 (defun render-uri (uri &optional stream)
-  (cond
-    ((uri-ftp-p uri)
-     (format stream
-             "~@[~(~A~):~]~@[//~(~A~)~]~@[~A~]~@[;type=~A~]~@[?~A~]~@[#~A~]"
-             (uri-scheme uri)
-             (uri-authority uri)
-             (uri-path uri)
-             (uri-ftp-typecode uri)
-             (uri-query uri)
-             (uri-fragment uri)))
-    ((uri-file-p uri)
-     (format stream
-             "~@[~(~A~)://~]~@[~(~a~)~]"
-             (uri-scheme uri)
-             (uri-path uri)))
-    (t
-     (format stream
-             "~@[~(~A~):~]~@[//~(~A~)~]~@[~A~]~@[?~A~]~@[#~A~]"
-             (uri-scheme uri)
-             (uri-authority uri)
-             (uri-path uri)
-             (uri-query uri)
-             (uri-fragment uri)))))
+  (flet ((maybe-slash (authority path)
+           (if (and (not (uiop:emptyp authority)) (not (uiop:emptyp path))
+                    (char/= (uiop:last-char authority) #\/)
+                    (char/= (uiop:first-char path) #\/))
+               "/"
+               "")))
+    (cond
+      ((uri-ftp-p uri)
+       (format stream
+               "~@[~(~A~):~]~@[//~A~]~a~@[~A~]~@[;type=~A~]~@[?~A~]~@[#~A~]"
+               (uri-scheme uri)
+               (uri-authority uri)
+               (maybe-slash (uri-authority uri) (uri-path uri))
+               (uri-path uri)
+               (uri-ftp-typecode uri)
+               (uri-query uri)
+               (uri-fragment uri)))
+      ((uri-file-p uri)
+       (format stream
+               "~@[~(~A~)://~]~@[~A~]~@[?~A~]~@[#~A~]"
+               (uri-scheme uri)
+               (uri-path uri)
+               (uri-query uri)
+               (uri-fragment uri)))
+      (t
+       (format stream
+               "~@[~(~A~):~]~@[//~A~]~a~@[~A~]~@[?~A~]~@[#~A~]"
+               (uri-scheme uri)
+               (uri-authority uri)
+               (maybe-slash (uri-authority uri) (uri-path uri))
+               (uri-path uri)
+               (uri-query uri)
+               (uri-fragment uri))))))
 
-(defun uri= (uri1 uri2)
+(defun %uri= (uri1 uri2 &key normalize-path-p)
   (check-type uri1 uri)
   (check-type uri2 uri)
-  (when (eq (type-of uri1) (type-of uri2))
-    (and (equalp (uri-scheme uri1)    (uri-scheme uri2))
-         ;; An empty path should be normalized to a path of "/".
-         ;; RFC 3986 (https://tools.ietf.org/html/rfc3986#section-6.2.3)
-         (equal  (or (uri-path uri1) "/") (or (uri-path uri2) "/"))
-         (equal  (uri-query uri1)     (uri-query uri2))
-         (equal  (uri-fragment uri1)  (uri-fragment uri2))
+  (flet ((%path (path)
+           "Define path equivalence relations."
+           (cond (normalize-path-p
+                  (if (or (null path) (equal path ""))
+                      "/"
+                      path))
+                 (t
+                  (or path "")))))
+    (and (eq (type-of uri1) (type-of uri2))
+         (equal (%path (uri-path uri1)) (%path (uri-path uri2)))
+         (equal (uri-query uri1) (uri-query uri2))
+         (equal (uri-fragment uri1) (uri-fragment uri2))
          (equalp (uri-authority uri1) (uri-authority uri2))
          (or (not (uri-ftp-p uri1))
              (eql (uri-ftp-typecode uri1) (uri-ftp-typecode uri2))))))
+
+(defun uri= (uri1 uri2)
+  "Whether URI1 refers to the same URI as URI2.
+Paths are not normalized. See `uri-equal'."
+  (%uri= uri1 uri2))
+
+(defun uri-equal (uri1 uri2)
+  "Whether URI1 refers to the same URI as URI2.
+Empty paths are normalized to '/' as per RFC 3986
+(https://tools.ietf.org/html/rfc3986#section-6.2.3).
+See `uri='."
+  (%uri= uri1 uri2  :normalize-path-p t))
 
 (defmethod print-object ((uri uri) stream)
   (if (and (null *print-readably*) (null *print-escape*))
@@ -125,44 +150,47 @@
                 (write-char #\/ s)))))))
 
 (defun merge-uris (reference base)
-  (let ((reference (uri reference))
-        (base (uri base)))
-    (declare (uri reference base))
-    "Merge a reference URI into the base URI as described in RFC 2396 Section 5.2.
-The returned URI may or may not be a new instance. Neither REFERENCE nor BASE is
+  "Merge a reference URI into the base URI as described in RFC 2396 Section 5.2.
+The returned URI is always a new instance. Neither REFERENCE nor BASE is
 mutated."
-    ;; Step 2 -- return base if same document
-    (when (uri= reference base)
-      (return-from merge-uris base))
-
-    ;; Step 3 -- scheme
-    (when (uri-scheme reference)
-      (return-from merge-uris reference))
-    (let ((uri (copy-uri reference :scheme (uri-scheme base))))
-      (when (null (uri-port uri))
-        (setf (uri-port uri) (scheme-default-port (uri-scheme uri))))
-      (macrolet ((done () '(return-from merge-uris uri)))
-
-        ;; Step 4 -- Authority
-        (when (uri-host uri)
-          (done))
-        (setf (uri-userinfo uri) (uri-userinfo base))
-        (setf (uri-host uri) (uri-host base))
-        (setf (uri-port uri) (uri-port base))
-
-        ;; Step 5 -- Empty path
-        (when (null (uri-path uri))
-          (setf (uri-path uri) (uri-path base))
-          (done))
-
-        ;; Step 6 -- Absolute path
-        (alexandria:when-let* ((p (uri-path uri))
-                               (first-char (and (> (length p) 0) (char p 0))))
-                              (when (char= #\/ first-char)
-                                (done)))
-
-        ;; Step 7 -- Relative path
-        (setf (uri-path uri) (merge-uri-paths (uri-path uri) (uri-path base)))
-
-        ;; Step 8 -- Finish
-        (done)))))
+  (let* ((reference (uri reference))
+         (base (uri base))
+         (merged-uri (copy-uri reference)))
+    (declare (uri reference base))
+    ;; Steps described at
+    ;; https://datatracker.ietf.org/doc/html/rfc2396#section-5.2
+    ;; Step 1 is absent since it's implicit
+    (flet ((return-merged-uri () (return-from merge-uris (uri merged-uri)))
+           (merge-paths () (setf (uri-path merged-uri)
+                                 (merge-uri-paths (uri-path merged-uri) nil))))
+      ;; Step 2
+      (when (uri-equal reference base)
+        (return-merged-uri))
+      ;; Step 3
+      (when (uri-scheme merged-uri)
+        (merge-paths)
+        (return-merged-uri))
+      (setf merged-uri (copy-uri merged-uri :scheme (uri-scheme base)))
+      ;; Step 4
+      (when (null (uri-port merged-uri))
+        (setf (uri-port merged-uri) (scheme-default-port (uri-scheme merged-uri))))
+      (when (uri-host merged-uri)
+        (merge-paths)
+        (return-merged-uri))
+      (setf (uri-userinfo merged-uri) (uri-userinfo base))
+      (setf (uri-host merged-uri) (uri-host base))
+      (setf (uri-port merged-uri) (uri-port base))
+      ;; Step 5
+      (when (null (uri-path merged-uri))
+        (setf (uri-path merged-uri) (uri-path base))
+        (return-merged-uri))
+      ;; Step 6
+      (alexandria:when-let* ((p (uri-path merged-uri))
+                             (first-char (and (> (length p) 0) (char p 0)))
+                             (_ (char= #\/ first-char)))
+        (merge-paths)
+        (return-merged-uri))
+      ;; Step 7
+      (setf (uri-path merged-uri)
+            (merge-uri-paths (uri-path merged-uri) (uri-path base)))
+      (return-merged-uri))))
